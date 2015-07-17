@@ -16,8 +16,8 @@ import java.util.Set;
  *
  */
 public class DoubleAccessMap<K, V> implements Map<K, V> {
-	private HashMap<K, V> map;
-	private HashMap<V, HashSet<K>> reverseMap;
+	private HashMap<K, V> map = new HashMap<K, V>();
+	private HashMap<V, Set<K>> reverseMap = new HashMap<V, Set<K>>();
 
 	/**
 	 * @see java.util.Map#clear()
@@ -65,7 +65,7 @@ public class DoubleAccessMap<K, V> implements Map<K, V> {
 	 * @param value
 	 * @return
 	 */
-	public HashSet<K> getKeys(V value) {
+	public Set<K> getKeys(V value) {
 		return reverseMap.get(value);
 	}
 
@@ -90,11 +90,23 @@ public class DoubleAccessMap<K, V> implements Map<K, V> {
 	 */
 	@Override
 	public V put(K key, V value) {
+		V oldValue = map.get(key);
 		V result = map.put(key, value);
+		
+		// Remove old reversed value
+		Set<K> oldKeys = reverseMap.get(oldValue);
+		if (oldKeys != null) {
+			oldKeys.remove(key);
+			
+			if (oldKeys.isEmpty()) {
+				reverseMap.remove(oldKeys);
+			}
+		}
 		
 		Set<K> keys = reverseMap.get(value);
 		if (keys == null) {
-			keys = reverseMap.put(value, new HashSet<K>());
+			keys = new HashSet<K>();
+			reverseMap.put(value, keys);
 		}
 		
 		keys.add(key);
